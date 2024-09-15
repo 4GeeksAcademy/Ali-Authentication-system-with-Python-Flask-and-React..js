@@ -1,6 +1,7 @@
 const getState = ({ getStore, getActions, setStore }) => {
 	return {
 		store: {
+			token: null,
 			message: null,
 			demo: [
 				{
@@ -19,6 +20,68 @@ const getState = ({ getStore, getActions, setStore }) => {
 			// Use getActions to call a function within a fuction
 			exampleFunction: () => {
 				getActions().changeColor(0, "green");
+			},
+
+
+			//asyncTokenFromSessionStore allows us to make the 
+			//session persist and avoid losing the token on 
+			//refresh.
+
+
+			syncTokenFromSessionStore: () => {
+				const sessionToken = sessionStorage.getItem('token');
+				console.log("Application just loaded. Syncing the sessionStorage token.");
+				if(sessionToken && sessionToken !== "" & sessionToken !== undefined) {
+					setStore({token: sessionToken });
+				}
+			},
+
+
+
+			//we moved the log in function from login js to here
+			//creating an action in flux to handle the process
+			//and allowing us to set the token in the store for 
+			//future use.
+
+			login: async (email, password) => {
+				const options = {
+					method: 'POST',
+					mode: 'cors',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						email: email,
+						password: password
+					})
+				};
+		
+				
+					const response = await fetch('https://studious-capybara-q7vp6w9jjppg34j5q-3001.app.github.dev/api/token', options);
+
+					if(!response.ok) {
+						console.log("error: ", response.status, response.statusText)
+						return false;
+					}
+
+					const data = await response.json();
+					sessionStorage.setItem("token", data.access_token);
+					setStore({token: data.access_token})
+					return true;
+					// console.log(data);
+					// console.error("Error:", error);
+				
+
+			},
+
+			//logout allows revmoal of the token from the store
+			//and sessionStorage
+			logout: () => {
+				sessionStorage.removeItem("token")
+				setStore({token: null});
+				console.log("You've logged out.")
+
+
 			},
 
 			getMessage: async () => {
